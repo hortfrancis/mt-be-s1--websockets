@@ -6,11 +6,11 @@ require("dotenv").config();
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-const speechFolderPath = path.resolve("./speechFile");
 
-if (!fs.existsSync(speechFolderPath)) {
-  fs.mkdirSync(speechFolderPath);
-}
+// const speechFolderPath = path.resolve("./speechFile");
+// if (!fs.existsSync(speechFolderPath)) {
+//   fs.mkdirSync(speechFolderPath);
+// }
 
 async function textToSpeech(textReplyFromGPT) {
   try {

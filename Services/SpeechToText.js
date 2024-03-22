@@ -6,10 +6,11 @@ const client = new speech.SpeechClient({
 
 async function speechToText(audioData, languageCode) {
   try {
-    const audioBytes = Buffer.from(audioData, "base64");
+    // Don't need this line anymore (not encoded to base64 for HTTP transmission)
+    // const audioBytes = Buffer.from(audioData, "base64");
 
     const audio = {
-      content: audioBytes,
+      content: audioData,
     };
     const config = {
       languageCode: languageCode,
