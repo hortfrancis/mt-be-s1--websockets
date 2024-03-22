@@ -6,27 +6,47 @@ const wss = new WebSocket.Server({ port: 3001 });
 
 wss.on('connection', (ws) => {
     console.log('Client connected to the WebSocket server');
+    let expectBinary = false;
 
     ws.on('message', (message) => {
-        if (message instanceof Buffer) {
-            // Handle binary data
+        if (expectBinary) {
             console.log('Received binary data');
-
+            // Handle binary audio data ... 
             // Save the binary data to a file
-            const filePath = './audioFile02.wav';
+            const filePath = './audioFile01.wav';
             fs.writeFile(filePath, Buffer.from(message), (err) => {
                 if (err) {
                     console.error('Error saving audio file:', err);
-                    return;
+                    return ws.send(JSON.stringify({ error: 'File writing error' }));
                 }
+                // Reset the expectation for the next message
+                expectBinary = false;
                 console.log(`Audio file saved to ${filePath}`);
+                ws.send(JSON.stringify({ message: 'Audio file processed' }));
             });
-            console.log('Audio file saved to audioFile.wav');
-            return;
+            // return;
+        } else {
+            // Assuming the message is text and attempting to parse it
+            try {
+                const data = JSON.parse(message.toString());
+                if (data.type === 'audio') {
+                    console.log('Switch to receive audio data');
+                    expectBinary = true;
+                    ws.send(JSON.stringify({ mode: 'audio' }));
+                    return;
+                } else {
+                    console.log('Received text data:', data);
+                    ws.send(JSON.stringify({ message: "The backend says hello!" }));
+                }
+            } catch (error) {
+                console.error("Error parsing JSON data:", error);
+            }
+            // console.log(`Received message: ${message}`);
+            // ws.send('The backend says hello!');
         }
 
-        console.log(`Received message: ${message}`);
-        ws.send('The backend says hello!');
+        // console.log(`Received message: ${message}`);
+        // ws.send('The backend says hello!');
     });
 
     ws.on('close', () => {
