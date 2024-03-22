@@ -2,6 +2,7 @@ const WebSocket = require('ws');
 const fs = require("fs");
 // const conversationArray = require("./Services/PromptAI");
 const { transcribeGujarati, transcribeEnglish } = require("./Services/SpeechToText");
+const { textToSpeech } = require("./Services/TextToSpeech");
 
 const wss = new WebSocket.Server({ port: 3001 });
 
@@ -14,31 +15,50 @@ wss.on('connection', (ws) => {
         if (expectBinary) {
             console.log('Received binary data');
             // Handle binary audio data ... 
-            console.log('(17) expectBinary:', expectBinary);
+            console.log('(18) expectBinary:', expectBinary);
 
+            // THIS CODE WORKS!
+            // IT IS FOR TRANSCRIBING THE AUDIO DATA AND RETURNING IT TO THE CLIENT
+            // (async () => {
+            //     try {
+            //         // const transcribedEnglish = await transcribeEnglish(message);
+            //         // console.log("Transcribed English:", transcribedEnglish);
+            //         // const transcribedGujarati = await transcribeGujarati(message);
+            //         // console.log("Transcribed Gujarati:", transcribedGujarati);
+
+            //         // ws.send(JSON.stringify({
+            //         //     message: {
+            //         //         type: 'user transcription',
+            //         //         content: {
+            //         //             englishTranscription: transcribedEnglish,
+            //         //             gujaratiTranscription: transcribedGujarati
+            //         //         }
+            //         //     }
+            //         // }));
+            //     } catch (error) {
+            //         console.error("Error transcribing English:", error);
+            //     }
+            // })();
+
+            // SEND GENERATED SPEECH TO CLIENT
             (async () => {
                 try {
-                    const transcribedEnglish = await transcribeEnglish(message);
-                    console.log("Transcribed English:", transcribedEnglish);
-                    const transcribedGujarati = await transcribeGujarati(message);
-                    console.log("Transcribed Gujarati:", transcribedGujarati);
+                    const textReplyFromGPT = "Hello, this is a test of the text-to-speech system.";
+                    const audioData = await textToSpeech(textReplyFromGPT);
 
-                    ws.send(JSON.stringify({
-                        message: {
-                            type: 'user transcription',
-                            content: {
-                                englishTranscription: transcribedEnglish,
-                                gujaratiTranscription: transcribedGujarati
-                            }
-                        }
-                    }));
+                    ws.send(JSON.stringify({ mode: 'audio'}))
+                    ws.send(audioData);
                 } catch (error) {
-                    console.error("Error transcribing English:", error);
+                    console.error("Error generating speech:", error);
                 }
             })();
 
+
+
             // Reset the expectation for the next message
             expectBinary = false;
+
+
 
 
             // // Save the binary data to a file
@@ -58,7 +78,7 @@ wss.on('connection', (ws) => {
             // Assuming the message is text and attempting to parse it
             try {
                 const data = JSON.parse(message.toString());
-                if (data.type === 'audio') {
+                if (data.mode === 'audio') {
                     console.log('Switch to receive audio data');
                     expectBinary = true;
                     ws.send(JSON.stringify({ mode: 'audio' }));
